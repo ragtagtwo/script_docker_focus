@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Extract the container name of the running container with the specified image
+container_name=$(docker ps --filter "ancestor=rayen1doud1/planning_db:latest" --format "{{.Names}}")
+
+# Check if the container name was found
+if [ -z "$container_name" ]; then
+  echo "No running container found with the image rayen1doud1/planning_db:latest"
+  exit 1
+fi
+
+# Pull the latest task image
+docker pull rayen1doud1/task:latest
+
+# Run the Docker command with the extracted container name replacing 'database_name'
+docker run --network my-network -p 8082:8082 -e SPRING_DATASOURCE_URL=jdbc:mysql://$container_name:3306/order_service rayen1doud1/team:latest
