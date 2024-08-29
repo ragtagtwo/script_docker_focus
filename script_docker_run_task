@@ -9,13 +9,22 @@ echo "Logging in to Docker registry..."
 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 # Extract the container name of the running container with the specified planning_db image
-container_name=$(docker ps --filter "ancestor=rayen1doud1/planning_db:latest" --format "{{.Names}}")
+db_container_id=$(docker ps --filter "ancestor=rayen1doud1/planning_db:latest" --format "{{.ID}}")
 
-# Check if the container name was found
-if [ -z "$container_name" ]; then
-  echo "No running container found with the image rayen1doud1/planning_db:latest"
-  exit 1
+# Stop and remove the running container for the planning_db image if found
+if [ -n "$db_container_id" ]; then
+  echo "Stopping and removing the running container for rayen1doud1/planning_db:latest..."
+  docker stop "$db_container_id"
+  docker rm "$db_container_id"
 fi
+
+# Pull the latest planning_db image
+docker pull rayen1doud1/planning_db:latest
+
+# Run a new container for the planning_db image
+echo "Running the new container for rayen1doud1/planning_db:latest..."
+db_container_name="planning_db_container"
+docker run --network my-network -d --name "$db_container_name" rayen1doud1/planning_db:latest
 
 # Extract the container ID of the running container with the task image
 task_container_id=$(docker ps --filter "ancestor=rayen1doud1/task:latest" --format "{{.ID}}")
@@ -31,7 +40,7 @@ fi
 docker pull rayen1doud1/task:latest
 
 # Run the Docker command with the extracted container name replacing 'database_name'
-docker run --network my-network -d -p 8083:8083 -e SPRING_DATASOURCE_URL=jdbc:mysql://$container_name:3306/order_service rayen1doud1/task:latest
+docker run --network my-network -d -p 8083:8083 -e SPRING_DATASOURCE_URL=jdbc:mysql://$db_container_name:3306/order_service rayen1doud1/task:latest
 
 # Extract the container ID of the running container with the planning image
 planning_container_id=$(docker ps --filter "ancestor=rayen1doud1/planning:latest" --format "{{.ID}}")
