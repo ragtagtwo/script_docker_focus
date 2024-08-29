@@ -8,7 +8,6 @@ DOCKER_PASSWORD="123578951rayen"
 echo "Logging in to Docker registry..."
 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
-
 # Extract the container name of the running container with the specified planning_db image
 container_name=$(docker ps --filter "ancestor=rayen1doud1/planning_db:latest" --format "{{.Names}}")
 
@@ -21,10 +20,11 @@ fi
 # Extract the container ID of the running container with the task image
 task_container_id=$(docker ps --filter "ancestor=rayen1doud1/task:latest" --format "{{.ID}}")
 
-# Stop the running container for the task image if found
+# Stop and remove the running container for the task image if found
 if [ -n "$task_container_id" ]; then
-  echo "Stopping the running container for rayen1doud1/task:latest..."
+  echo "Stopping and removing the running container for rayen1doud1/task:latest..."
   docker stop "$task_container_id"
+  docker rm "$task_container_id"
 fi
 
 # Pull the latest task image
@@ -32,3 +32,20 @@ docker pull rayen1doud1/task:latest
 
 # Run the Docker command with the extracted container name replacing 'database_name'
 docker run --network my-network -d -p 8083:8083 -e SPRING_DATASOURCE_URL=jdbc:mysql://$container_name:3306/order_service rayen1doud1/task:latest
+
+# Extract the container ID of the running container with the planning image
+planning_container_id=$(docker ps --filter "ancestor=rayen1doud1/planning:latest" --format "{{.ID}}")
+
+# Stop and remove the running container for the planning image if found
+if [ -n "$planning_container_id" ]; then
+  echo "Stopping and removing the running container for rayen1doud1/planning:latest..."
+  docker stop "$planning_container_id"
+  docker rm "$planning_container_id"
+fi
+
+# Pull the latest planning image
+docker pull rayen1doud1/planning:latest
+
+# Run a new container for the planning image
+echo "Running the new container for rayen1doud1/planning:latest..."
+docker run --network my-network -d -p 4200:80 rayen1doud1/planning:latest
