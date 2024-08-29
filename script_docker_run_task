@@ -8,7 +8,7 @@ DOCKER_PASSWORD="123578951rayen"
 echo "Logging in to Docker registry..."
 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
-# Extract the container name of the running container with the specified planning_db image
+# Extract the container ID of the running container with the specified planning_db image
 db_container_id=$(docker ps --filter "ancestor=rayen1doud1/planning_db:latest" --format "{{.ID}}")
 
 # Stop and remove the running container for the planning_db image if found
@@ -58,3 +58,37 @@ docker pull rayen1doud1/planning:latest
 # Run a new container for the planning image
 echo "Running the new container for rayen1doud1/planning:latest..."
 docker run --network my-network -d -p 4200:80 rayen1doud1/planning:latest
+
+# Extract the container ID of the running container with the team image
+team_container_id=$(docker ps --filter "ancestor=rayen1doud1/team:latest" --format "{{.ID}}")
+
+# Stop and remove the running container for the team image if found
+if [ -n "$team_container_id" ]; then
+  echo "Stopping and removing the running container for rayen1doud1/team:latest..."
+  docker stop "$team_container_id"
+  docker rm "$team_container_id"
+fi
+
+# Pull the latest team image
+docker pull rayen1doud1/team:latest
+
+# Run a new container for the team image
+echo "Running the new container for rayen1doud1/team:latest..."
+docker run --network my-network -d -p 8082:8082 -e SPRING_DATASOURCE_URL=jdbc:mysql://$db_container_name:3306/order_service rayen1doud1/team:latest
+
+# Extract the container ID of the running container with the engineer image
+engineer_container_id=$(docker ps --filter "ancestor=rayen1doud1/engineer:latest" --format "{{.ID}}")
+
+# Stop and remove the running container for the engineer image if found
+if [ -n "$engineer_container_id" ]; then
+  echo "Stopping and removing the running container for rayen1doud1/engineer:latest..."
+  docker stop "$engineer_container_id"
+  docker rm "$engineer_container_id"
+fi
+
+# Pull the latest engineer image
+docker pull rayen1doud1/engineer:latest
+
+# Run a new container for the engineer image
+echo "Running the new container for rayen1doud1/engineer:latest..."
+docker run --network my-network -d -p 8081:8081 -e SPRING_DATASOURCE_URL=jdbc:mysql://$db_container_name:3306/order_service rayen1doud1/engineer:latest
