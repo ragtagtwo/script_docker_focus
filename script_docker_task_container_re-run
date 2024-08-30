@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Docker registry credentials
+DOCKER_USERNAME="rayen1doud1"
+DOCKER_PASSWORD="123578951rayen"
+
+# Log in to Docker registry
+echo "Logging in to Docker registry..."
+echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+# Extract the container ID of the running container with the task image
+task_container_id=$(docker ps --filter "ancestor=rayen1doud1/task:latest" --format "{{.ID}}")
+
+# Stop and remove the running container for the task image if found
+if [ -n "$task_container_id" ]; then
+  echo "Stopping and removing the running container for rayen1doud1/task:latest..."
+  docker stop "$task_container_id"
+  docker rm "$task_container_id"
+fi
+
+# Pull the latest task image
+docker pull rayen1doud1/task:latest
+
+# Run the Docker command with the extracted container name replacing 'database_name'
+docker run --network my-network -d -p 8083:8083 -e SPRING_DATASOURCE_URL=jdbc:mysql://$db_container_name:3306/order_service rayen1doud1/task:latest
